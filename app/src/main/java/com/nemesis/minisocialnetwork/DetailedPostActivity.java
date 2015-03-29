@@ -4,7 +4,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.ShareActionProvider;
+import android.support.v7.widget.Toolbar;
+import android.text.SpannableString;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -39,6 +43,9 @@ public class DetailedPostActivity extends ActionBarActivity {
     private String likelist;
     private String timestamp;
     private String uid,token;
+    private ShareActionProvider mShareActionProvider;
+    private String t;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +56,7 @@ public class DetailedPostActivity extends ActionBarActivity {
         f = intent.getExtras().getString("fid");
         String n = intent.getExtras().getString("name");
         String u = intent.getExtras().getString("uid");
-        String t = intent.getExtras().getString("text");
+        t = intent.getExtras().getString("text");
         TextView tv=(TextView)findViewById(R.id.user);
         tv.setText(n);
         TextView tv2=(TextView)findViewById(R.id.text);
@@ -60,10 +67,26 @@ public class DetailedPostActivity extends ActionBarActivity {
         String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
         Picasso.with(getApplicationContext()).load(imgURI).into(av);
 
+
+
+
         SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);
+
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
+        SpannableString s = new SpannableString(n);
+
+
+
+        if(toolbar != null)
+        {
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setTitle(s);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         final EditText edittext = (EditText) findViewById(R.id.edittext);
         edittext.setOnKeyListener(new View.OnKeyListener() {
@@ -85,12 +108,36 @@ public class DetailedPostActivity extends ActionBarActivity {
         });
     }
 
+    private Intent createShareIntent() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+
+        String forecastStr=getIntent().getExtras().getString("text");
+
+        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                forecastStr+ " #MyTimeLine");
+        return shareIntent;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.menu_detailed_post, menu);
-        return true;
+        getMenuInflater().inflate(R.menu.menu_detailed_post, menu);
+
+
+        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
+// Get the provider and hold onto it to set/change the share intent.
+        ShareActionProvider mShareActionProvider =
+                (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+// Attach an intent to this ShareActionProvider. You can update this at any time,
+// like when the user selects a new piece of data they might like to share.
+        if (mShareActionProvider != null ) {
+            mShareActionProvider.setShareIntent(createShareIntent());
+        } else {
+            //Log.d(LOG_TAG, "Share Action Provider is null?");
+        }
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -100,13 +147,10 @@ public class DetailedPostActivity extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
+
+
 
     public class FetchCommTask extends AsyncTask<Void, Void, Void> {
         String LOG_TAG = FetchCommTask.class.getSimpleName();

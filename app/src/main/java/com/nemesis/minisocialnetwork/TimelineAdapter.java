@@ -133,13 +133,12 @@ public class TimelineAdapter extends BaseAdapter {
 
                 if(network==true)
                 {
-                    //String like=tv3.getText().toString();
+
                     tv3.setText("Upvotes ("+(Integer.parseInt(postarr[position].numlikes)+1)+")");
                     tv3.setTextColor(darkmagenta);
-                    //iv3.setColorFilter((color.magenta), android.graphics.PorterDuff.Mode.MULTIPLY);
-                    //iv3.setColorFilter(Color.argb(255, 255, 255, 255));
+
                     iv3.setImageResource(R.drawable.upvote_blue);
-                    NewLikeTask l=new NewLikeTask(postarr[position].fid,"1");
+                    NewLikeTask l=new NewLikeTask(postarr[position].fid);
                     l.execute();
                 }
                 else
@@ -300,9 +299,9 @@ public class NewLikeTask extends AsyncTask<Void, Void, String> {
 
 
 
-    public NewLikeTask(String fid, String token) {
+    public NewLikeTask(String fid) {
         this.fid=fid;
-        this.token=token;
+
     }
 
 
@@ -318,6 +317,7 @@ public class NewLikeTask extends AsyncTask<Void, Void, String> {
         try {
 
             url = new URL("http://www.api.wavit.co/v1.1/index.php/feed/like/"+token);
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }

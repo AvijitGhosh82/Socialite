@@ -76,7 +76,7 @@ public class CommentAdapter extends BaseAdapter {
             row=convertView;
         }
         TextView tv=(TextView) row.findViewById(R.id.textcomm);
-        
+
 
 
         final ImageView iv=(ImageView) row.findViewById(R.id.avatarcomm);
