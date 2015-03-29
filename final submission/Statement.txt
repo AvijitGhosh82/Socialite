@@ -1,0 +1,1 @@
+ A mini social network that can be used by school, college or work groups to keep up with each other. Just the latest info in a beautiful feed, that even works offline. Signup is not activated at the moment. Use guest@my.app and password=guest to try out!

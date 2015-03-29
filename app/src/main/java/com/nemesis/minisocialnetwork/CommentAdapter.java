@@ -76,8 +76,7 @@ public class CommentAdapter extends BaseAdapter {
             row=convertView;
         }
         TextView tv=(TextView) row.findViewById(R.id.textcomm);
-        TextView td=(TextView) row.findViewById(R.id.design);
-        td.setText(timestamp);
+        
 
 
         final ImageView iv=(ImageView) row.findViewById(R.id.avatarcomm);
