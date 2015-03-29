@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--<color name="primary" type="color">#ff259b24</color>
+    <color name="primarydark" type="color">#ff0a7e07</color>-->
+    <color name="accent">#ff0091ea</color>
+    <color name="primarytext" type="color">#de000000</color>
+    <color name="secondarytext" type="color">#8a000000</color>
+    <color name="ondarktext" type="color">#fffafafa</color>
+    <color name="primarybackground" type="color">#fffafafa</color>
+    <color name="secondarybackground" type="color">#ffeeeeee</color>
+    <color name="darkbackground" type="color">#ff323232</color>
+    <color name="divider">#1f000000</color>
+    <color name="red">#ffe51c23</color>
+    <color name="orange">#ffff9800</color>
+    <color name="green">#ff259b24</color>
+    <item name="darkblue" type="color">#ff1976d2</item>
+    <item name="darkpurple" type="color">#ff7b1fa2</item>
+    <item name="darkgreen" type="color">#ff388e3c</item>
+    <item name="darkgrey" type="color">#424242</item>
+    <item name="darkorange" type="color">#ffef6c00</item>
+    <item name="darkred" type="color">#ffd32f2f</item>
+    <item name="magenta" type="color">#ff259b24</item>
+    <item name="darkmagenta" type="color">#ff388e3c</item>
+    <color name="primary" type="color">#081765</color>
+    <color name="primarydark" type="color">#051046</color>
+    <color name="white" type="color">#ffffff</color>
+
+</resources>

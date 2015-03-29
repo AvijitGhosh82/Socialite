@@ -1,0 +1,24 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1.5dp</item>
+        <item name="android:background">@color/divider</item>
+    </style>
+    <style name="Tag">
+
+    </style>
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <!-- Customize your theme here. -->
+        <item name="windowActionBar">false</item>
+        <item name="colorPrimary">@color/magenta</item>
+        <item name="colorPrimaryDark">@color/darkmagenta</item>
+        <item name="colorAccent">@color/magenta</item>
+
+    </style>
+
+    <style name="menu_labels_style">
+        <item name="android:background">#2e2e2e</item>
+        <item name="android:textColor">#ffffffff</item>
+    </style>
+
+</resources>
