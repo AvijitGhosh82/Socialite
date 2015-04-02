@@ -41,7 +41,6 @@ public class TimelineAdapter extends BaseAdapter {
     private Context context;
     Post[] postarr;
     Boolean network;
-    private boolean canLike;
 
 
     public TimelineAdapter(Context context, Post[] postarr, boolean network)
@@ -127,6 +126,8 @@ public class TimelineAdapter extends BaseAdapter {
         }
 
 
+
+
         like.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -134,12 +135,13 @@ public class TimelineAdapter extends BaseAdapter {
                 if(network==true)
                 {
 
+
                     tv3.setText("Upvotes ("+(Integer.parseInt(postarr[position].numlikes)+1)+")");
                     tv3.setTextColor(darkmagenta);
-
                     iv3.setImageResource(R.drawable.upvote_blue);
                     NewLikeTask l=new NewLikeTask(postarr[position].fid);
                     l.execute();
+
                 }
                 else
                 {
@@ -147,6 +149,16 @@ public class TimelineAdapter extends BaseAdapter {
                 }
             }
         });
+        String list=postarr[position].likes;
+
+
+
+        if(list.matches("(^|(.*,))"+postarr[position].uid+"((,.*)|$)"))
+        {
+            iv3.setImageResource(R.drawable.upvote_blue);
+            tv3.setTextColor(darkmagenta);
+
+        }
         final ImageButton comm=(ImageButton) row.findViewById(R.id.commbutt);
         comm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -167,13 +179,7 @@ public class TimelineAdapter extends BaseAdapter {
             tv2.setText(postarr[position].headtext);
             tv3.setText("Upvotes ("+postarr[position].numlikes+")");
             tv4.setText("Comments ("+postarr[position].numcomm+")");
-            String list=postarr[position].likes;
-            if(list.matches("(^|(.*,))"+postarr[position].uid+"((,.*)|$)"))
-            {
-                iv3.setImageResource(R.drawable.upvote_blue);
-                tv3.setTextColor(darkmagenta);
-                canLike=false;
-            }
+
 
 
 
@@ -295,7 +301,7 @@ public class TimelineAdapter extends BaseAdapter {
 public class NewLikeTask extends AsyncTask<Void, Void, String> {
     String LOG_TAG = NewLikeTask.class.getSimpleName();
 
-    String fid,token;
+    String fid;
 
 
 

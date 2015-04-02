@@ -193,7 +193,7 @@ public class LoginActivity extends Activity {
             String uid = obj.getString("uid");
             String token = obj.getString("id");
 
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString("uid", uid);
         editor.putString("token", token);

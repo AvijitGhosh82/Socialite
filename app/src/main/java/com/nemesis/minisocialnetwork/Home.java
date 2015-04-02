@@ -50,7 +50,7 @@ public class Home extends ActionBarActivity {
         setContentView(R.layout.activity_home);
 
 
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);

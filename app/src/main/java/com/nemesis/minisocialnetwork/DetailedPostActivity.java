@@ -33,7 +33,8 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class DetailedPostActivity extends ActionBarActivity {
@@ -56,7 +57,12 @@ public class DetailedPostActivity extends ActionBarActivity {
         f = intent.getExtras().getString("fid");
         String n = intent.getExtras().getString("name");
         String u = intent.getExtras().getString("uid");
-        t = intent.getExtras().getString("text");
+        String t = intent.getExtras().getString("text");
+
+        SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        uid=pref.getString("uid", null);
+        token=pref.getString("token", null);
         TextView tv=(TextView)findViewById(R.id.user);
         tv.setText(n);
         TextView tv2=(TextView)findViewById(R.id.text);
@@ -67,20 +73,8 @@ public class DetailedPostActivity extends ActionBarActivity {
         String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
         Picasso.with(getApplicationContext()).load(imgURI).into(av);
 
-
-
-
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = pref.edit();
-        uid=pref.getString("uid", null);
-        token=pref.getString("token", null);
-
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
         SpannableString s = new SpannableString(n);
-
-
-
         if(toolbar != null)
         {
             setSupportActionBar(toolbar);
@@ -219,7 +213,6 @@ public class DetailedPostActivity extends ActionBarActivity {
                     commarray = getComments(forecastJsonStr);
                     uidarray = getuid(forecastJsonStr);
                     likelist=getLikes(forecastJsonStr);
-                    timestamp=getTimeStamp(forecastJsonStr);
 
                 } catch (JSONException j) {
                     return null;
@@ -246,42 +239,6 @@ public class DetailedPostActivity extends ActionBarActivity {
             return null;
         }
 
-        private String getTimeStamp(String forecastJsonStr)
-                throws JSONException {
-
-            // These are the names of the JSON objects that need to be extracted.
-
-            final String OWM_HEAD = "feed_head";
-
-            final String OWM_COMMENTS = "feed_comments";
-            final String OWM_LIKES = "feed_likes";
-            final String OWM_COMMENT_TEXT = "text";
-            final String OWM_LIKES_NAME = "name";
-            final String OWM_COMMENT_UID = "posted_by";
-            String ctxt=null;
-
-
-
-            JSONObject forecastJson = new JSONObject(forecastJsonStr);
-            JSONArray headArray = forecastJson.getJSONArray(OWM_HEAD);
-            //JSONArray dataArray = forecastJson.getJSONArray(OWM_DATA);
-
-
-            //String[] resultp = new String[feedArray.length()];
-            for (int i = 0; i < headArray.length(); i++) {
-
-
-                JSONObject feedobj = headArray.getJSONObject(i);
-
-
-                ctxt=feedobj.getString("timestamp");
-
-            }
-
-
-            return ctxt;
-
-        }
 
 
         private String getLikes(String forecastJsonStr)
@@ -289,36 +246,27 @@ public class DetailedPostActivity extends ActionBarActivity {
 
             // These are the names of the JSON objects that need to be extracted.
 
-            final String OWM_DATA = "feed_data";
 
-            final String OWM_COMMENTS = "feed_comments";
             final String OWM_LIKES = "feed_likes";
-            final String OWM_COMMENT_TEXT = "text";
             final String OWM_LIKES_NAME = "name";
-            final String OWM_COMMENT_UID = "posted_by";
-            String ctxt=null;
+            String ctxt="";
 
 
 
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
             JSONArray feedArray = forecastJson.getJSONArray(OWM_LIKES);
-            //JSONArray dataArray = forecastJson.getJSONArray(OWM_DATA);
 
 
-            //String[] resultp = new String[feedArray.length()];
             for (int i = 0; i < feedArray.length(); i++) {
 
 
                 JSONObject feedobj = feedArray.getJSONObject(i);
 
 
-                ctxt= ctxt+","+feedobj.getString(OWM_LIKES_NAME);
-                //String cuid = feedobj.getString(OWM_COMMENT_UID);
-
-                //Toast.makeText(DetailedPostActivity.this, ctxt+"\n"+cuid, Toast.LENGTH_SHORT).show();
+                ctxt= ctxt+feedobj.getString(OWM_LIKES_NAME)+",";
 
 
-                //resultp[i] = ctxt;
+
             }
 
 
@@ -369,8 +317,6 @@ public class DetailedPostActivity extends ActionBarActivity {
 
         }
 
-
-
         private String[] getuid(String forecastJsonStr)
                 throws JSONException {
 
@@ -410,12 +356,10 @@ public class DetailedPostActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             if(commarray!=null)
-            {CommentAdapter c=new CommentAdapter(DetailedPostActivity.this,commarray, uidarray,timestamp);
+            {CommentAdapter c=new CommentAdapter(DetailedPostActivity.this,commarray, uidarray,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
                 lv.setAdapter(c);}
             TextView tv2=(TextView)findViewById(R.id.liketext);
             tv2.setText(likelist);
-            TextView tv3=(TextView)findViewById(R.id.design);
-            tv2.setText(timestamp);
             super.onPostExecute(aVoid);
         }
     }
@@ -432,7 +376,6 @@ public class DetailedPostActivity extends ActionBarActivity {
         public NewCommTask(String fid, String comm) {
             this.fid=fid;
             this.comm=comm;
-            //this.token=token;
         }
 
 
