@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -50,6 +51,8 @@ public class DetailedPostFragment extends Fragment {
     private TextView tv2;
 
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -68,6 +71,26 @@ public class DetailedPostFragment extends Fragment {
             t = bundle.getString("text");
        }
 
+        ImageButton sh=(ImageButton)v.findViewById(R.id.sharebut);
+        if(sh!=null)
+        {
+            final String finalT = t;
+            sh.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/plain");
+
+                    //String forecastStr=getActivity().getIntent().getExtras().getString("text");
+
+                    shareIntent.putExtra(Intent.EXTRA_TEXT,
+                            finalT + " #MyTimeLine");
+
+                    startActivity(Intent.createChooser(shareIntent, "Share via"));
+                }
+            });
+        }
+
         tv2=(TextView)v.findViewById(R.id.liketext);
 
         SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
@@ -83,6 +106,8 @@ public class DetailedPostFragment extends Fragment {
         ImageView av=(ImageView)v.findViewById(R.id.avataru);
         String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
         Picasso.with(getActivity()).load(imgURI).into(av);
+
+
 
 
         final EditText edittext = (EditText) v.findViewById(R.id.edittext);

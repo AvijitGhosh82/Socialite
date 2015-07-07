@@ -32,6 +32,9 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/timelinelistview"
                 android:divider="@null"
+                android:choiceMode="singleChoice"
+                android:listSelector="#80259b24"
+                android:drawSelectorOnTop="true"
                 android:dividerHeight="10.0dp"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />

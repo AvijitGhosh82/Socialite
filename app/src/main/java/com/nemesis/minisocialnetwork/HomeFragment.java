@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -55,14 +56,35 @@ public class HomeFragment extends Fragment {
 
     };
     private OnItemClickedListener mListener=sDummyCallbacks ;
+    private Parcelable mListInstanceState;
+    private int mCurCheckPosition;
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("curChoice", mCurCheckPosition);
+        outState.putParcelable("LIST_INSTANCE_STATE", lv.onSaveInstanceState());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+            lv.setItemChecked(mCurCheckPosition, true);
+
+    }
+
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //FragmentActivity    faActivity  = (FragmentActivity)    super.getActivity();
         // Replace LinearLayout by the type of the root element of the layout you're trying to load
-        View v    = (View)inflater.inflate(R.layout.fragment_home, container, false);
+        View v    = (View) inflater.inflate(R.layout.fragment_home, container, false);
 
+        if(savedInstanceState!=null) {
+            mListInstanceState = savedInstanceState.getParcelable("LIST_INSTANCE_STATE");
+        }
         //llLayout.findViewById(R.id.someGuiElement);
 
         SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
@@ -153,6 +175,8 @@ public class HomeFragment extends Fragment {
 
         lv = (ListView) v.findViewById(R.id.timelinelistview);
 
+
+       // lv.onRestoreInstanceState(mListInstanceState);
 
 
 
@@ -432,6 +456,12 @@ public class HomeFragment extends Fragment {
             if(postarray!=null) {
                 TimelineAdapter mForeCastAdapter = new TimelineAdapter(getActivity(), postarray, isNetworkAvailable());
                 lv.setAdapter(mForeCastAdapter);
+                if(mListInstanceState!=null)
+                {
+                    lv.onRestoreInstanceState(mListInstanceState);
+                    lv.setItemChecked(mCurCheckPosition, true);
+                }
+
                 //mListener.OnItemClicked(Parameters params);
                 lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
@@ -442,6 +472,7 @@ public class HomeFragment extends Fragment {
                         bundle.putString("uid", postarray[position].uid);
                         bundle.putString("name", postarray[position].headby);
                         bundle.putString("text", postarray[position].headtext);
+                        mCurCheckPosition=position;
                         mListener.onItemSelected(bundle);
                     }
                 });
