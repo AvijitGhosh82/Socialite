@@ -96,9 +96,6 @@ public class LoginActivity extends Activity {
             try {
                 String postParameters="email="+email+"&password="+pass;
 
-
-
-
                 HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 
                 connection.setDoOutput(true);

@@ -1,7 +1,6 @@
 package com.nemesis.minisocialnetwork;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -28,7 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Random;
 
-import static com.nemesis.minisocialnetwork.R.color.darkmagenta;
+import static android.graphics.Color.parseColor;
 
 /**
  * Created by Avijit Ghosh on 22 Mar 2015.
@@ -79,6 +78,18 @@ public class TimelineAdapter extends BaseAdapter {
                 = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    @Override
+    public boolean isEnabled(int position) {
+        //Set a Toast or Log over here to check.
+        return true;
+    }
+
+    @Override
+    public boolean areAllItemsEnabled()
+    {
+        return true;
     }
 
     @Override
@@ -137,7 +148,7 @@ public class TimelineAdapter extends BaseAdapter {
 
 
                     tv3.setText("Upvotes ("+(Integer.parseInt(postarr[position].numlikes)+1)+")");
-                    tv3.setTextColor(darkmagenta);
+                    tv3.setTextColor(parseColor ("#051046"));
                     iv3.setImageResource(R.drawable.upvote_blue);
                     NewLikeTask l=new NewLikeTask(postarr[position].fid);
                     l.execute();
@@ -156,23 +167,35 @@ public class TimelineAdapter extends BaseAdapter {
         if(list.matches("(^|(.*,))"+postarr[position].uid+"((,.*)|$)"))
         {
             iv3.setImageResource(R.drawable.upvote_blue);
-            tv3.setTextColor(darkmagenta);
+            tv3.setTextColor(parseColor ("#051046"));
 
         }
         final ImageButton comm=(ImageButton) row.findViewById(R.id.commbutt);
-        comm.setOnClickListener(new View.OnClickListener() {
+        /*comm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                Intent i = new Intent(context, DetailedPostActivity.class);
+                if (Home.mTwoPane == true) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("fid", postarr[position].fid);
+                    bundle.putString("uid", postarr[position].uid);
+                    bundle.putString("name", postarr[position].headby);
+                    bundle.putString("text", postarr[position].headtext);
+
+
+                }
+
+
+                else
+                {Intent i = new Intent(context, DetailedPostActivity.class);
                 i.putExtra("fid", postarr[position].fid);
                 i.putExtra("uid", postarr[position].uid);
                 i.putExtra("name", postarr[position].headby);
                 i.putExtra("text", postarr[position].headtext);
 
-                context.startActivity(i);
+                context.startActivity(i);}
             }
-        });
+        });*/
 
 
             tv1.setText(postarr[position].headby);
@@ -185,6 +208,10 @@ public class TimelineAdapter extends BaseAdapter {
 
         return row;
     }
+
+
+
+
 
 
     public class NewPostTask extends AsyncTask<Void, Void, String> {

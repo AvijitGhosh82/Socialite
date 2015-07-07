@@ -1,15 +1,44 @@
 package com.nemesis.minisocialnetwork;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
-import android.support.v7.widget.Toolbar;
-import android.text.SpannableString;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
-public class DetailedPostActivity extends ActionBarActivity {
+public class DetailedPostFragment extends Fragment {
     String[] commarray = null,uidarray=null;
     private ListView lv;
     private String f;
@@ -18,55 +47,45 @@ public class DetailedPostActivity extends ActionBarActivity {
     private String uid,token;
     private ShareActionProvider mShareActionProvider;
     private String t;
+    private TextView tv2;
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detailed_post);
-        /*lv= (ListView) findViewById(R.id.commlist);*/
-        Intent intent = getIntent();
-        f = intent.getExtras().getString("fid");
-        String n = intent.getExtras().getString("name");
-        String u = intent.getExtras().getString("uid");
-        String t = intent.getExtras().getString("text");
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
 
-        /*SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+        View v = (View) inflater.inflate(R.layout.fragment_detail, container, false);
+
+        lv = (ListView) v.findViewById(R.id.commlist);
+        Intent intent = getActivity().getIntent();
+        Bundle bundle = this.getArguments();
+        String n = null,u=null,t=null;
+        if (bundle != null) {
+
+            f = bundle.getString("fid");
+            n = bundle.getString("name");
+            u = bundle.getString("uid");
+            t = bundle.getString("text");
+       }
+
+        tv2=(TextView)v.findViewById(R.id.liketext);
+
+        SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);
-        TextView tv=(TextView)findViewById(R.id.user);
+        TextView tv=(TextView)v.findViewById(R.id.user);
         tv.setText(n);
-        TextView tv2=(TextView)findViewById(R.id.text);
+        TextView tv2=(TextView)v.findViewById(R.id.text);
         tv2.setText(t);
         FetchCommTask fc=new FetchCommTask(f);
         fc.execute();
-        ImageView av=(ImageView)findViewById(R.id.avataru);
+        ImageView av=(ImageView)v.findViewById(R.id.avataru);
         String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
-        Picasso.with(getApplicationContext()).load(imgURI).into(av);*/
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
-        SpannableString s = new SpannableString(n);
-        if(toolbar != null)
-        {
-            setSupportActionBar(toolbar);
-            getSupportActionBar().setTitle(s);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-        if(savedInstanceState==null)
-        {DetailedPostFragment fragmentS1 = new DetailedPostFragment();
-            Bundle bundle = new Bundle();
-            bundle.putString("fid", f);
-            bundle.putString("uid", u);
-            bundle.putString("name", n);
-            bundle.putString("text", t);
+        Picasso.with(getActivity()).load(imgURI).into(av);
 
 
-            fragmentS1.setArguments(bundle);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_detail_container, fragmentS1).commit();}
-
-        /*final EditText edittext = (EditText) findViewById(R.id.edittext);
+        final EditText edittext = (EditText) v.findViewById(R.id.edittext);
         edittext.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 // If the event is a key-down event on the "enter" button
@@ -83,40 +102,58 @@ public class DetailedPostActivity extends ActionBarActivity {
                 }
                 return false;
             }
-        });*/
+        });
+
+        setHasOptionsMenu(true);
+
+
+        return v;
     }
 
-   /* private Intent createShareIntent() {
+
+
+
+    private Intent createShareIntent() {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
 
-        String forecastStr=getIntent().getExtras().getString("text");
+        String forecastStr=getActivity().getIntent().getExtras().getString("text");
 
         shareIntent.putExtra(Intent.EXTRA_TEXT,
                 forecastStr+ " #MyTimeLine");
         return shareIntent;
     }
 
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_detailed_post, menu);
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+        inflater.inflate(R.menu.menu_detailed_post, menu);
 
 
         MenuItem menuItem = menu.findItem(R.id.menu_item_share);
 // Get the provider and hold onto it to set/change the share intent.
         ShareActionProvider mShareActionProvider =
                 (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+        /*if(mShareActionProvider==null)
+        {
+            ShareActionProvider mShareActionProvider;
+            mShareActionProvider = new ShareActionProvider(getActivity());
+            mShareActionProvider.setShareIntent(createShareIntent());
+            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
+        }*/
 // Attach an intent to this ShareActionProvider. You can update this at any time,
 // like when the user selects a new piece of data they might like to share.
+
         if (mShareActionProvider != null ) {
             mShareActionProvider.setShareIntent(createShareIntent());
         } else {
             //Log.d(LOG_TAG, "Share Action Provider is null?");
-        }
-        return super.onCreateOptionsMenu(menu);
+
+        };
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -340,9 +377,9 @@ public class DetailedPostActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             if(commarray!=null)
-            {CommentAdapter c=new CommentAdapter(DetailedPostActivity.this,commarray, uidarray,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
+            {CommentAdapter c=new CommentAdapter(getActivity(),commarray, uidarray,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
                 lv.setAdapter(c);}
-            TextView tv2=(TextView)findViewById(R.id.liketext);
+
             tv2.setText(likelist);
             super.onPostExecute(aVoid);
         }
@@ -445,16 +482,13 @@ public class DetailedPostActivity extends ActionBarActivity {
         @Override
         protected void onPostExecute(String s) {
 
-            //super.onPostExecute(postarray);
-            // if(s.equalsIgnoreCase("1")) {
+
             FetchCommTask fc=new FetchCommTask(f);
             fc.execute();
-            // }
 
-            //Toast.makeText(ConversationActivity.this, s, Toast.LENGTH_SHORT).show();
 
 
 
         }
-    }*/
+    }
 }
