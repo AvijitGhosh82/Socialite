@@ -8,6 +8,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 
@@ -79,6 +81,10 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
+           FrameLayout mButton=(FrameLayout)findViewById(R.id.fragment_detail_container);
+           LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mButton.getLayoutParams();
+           params.weight = 4.0f;
+           mButton.setLayoutParams(params);
 
 
             DetailedPostFragment fragment = new DetailedPostFragment();
