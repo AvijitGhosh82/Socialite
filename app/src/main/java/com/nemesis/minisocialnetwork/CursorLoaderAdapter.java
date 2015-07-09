@@ -97,13 +97,5 @@ public class CursorLoaderAdapter extends CursorAdapter {
         tv4.setText("Comments ("+comments+")");
 
 
-
-
-
-      /*  TextView textViewPersonName = (TextView) view.findViewById(R.id.tv_person_name);
-        textViewPersonName.setText(cursor.getString(cursor.getColumnIndex(cursor.getColumnName(1))));
-
-        TextView textViewPersonPIN = (TextView) view.findViewById(R.id.tv_person_pin);
-        textViewPersonPIN.setText(cursor.getString(cursor.getColumnIndex(cursor.getColumnName(2))));*/
     }
 }

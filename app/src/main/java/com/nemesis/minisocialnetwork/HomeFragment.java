@@ -190,24 +190,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
 
 
-        //TextView tv=(TextView)findViewById(R.id.textView4);
-        //tv.setText("My TimeLine");
-        /*Toolbar toolbar = (Toolbar) v.findViewById(R.id.my_timeline_toolbar);
-        SpannableString s = new SpannableString("My Timeline");
-
-
-
-        if(toolbar != null)
-        {
-
-            toolbar.setTitle(s);
-            //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }*/
-
         lv = (ListView) v.findViewById(R.id.timelinelistview);
 
 
-       // lv.onRestoreInstanceState(mListInstanceState);
 
 
 
@@ -484,7 +469,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             // current day, we're going to take advantage of that to get a nice
             // normalized UTC date for all of our weather.
 
-
+            //getActivity().getContentResolver().delete(TimeLineProvider.CONTENT_URI,null,null);
 
             Post[] resultp = new Post[headArray.length()];
             for (int i = 0; i < headArray.length(); i++) {
@@ -520,8 +505,12 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 values.put(TimeLineProvider.COMMENTS,numcomm);
 
 
-                final Uri uri = getActivity().getContentResolver().insert(
-                        TimeLineProvider.CONTENT_URI, values);
+                try{
+                    final Uri uri = getActivity().getContentResolver().insert(
+                            TimeLineProvider.CONTENT_URI, values);}
+                catch (Exception e)
+                {}
+
 
 
                /* Handler handler =  new Handler(getActivity().getMainLooper());

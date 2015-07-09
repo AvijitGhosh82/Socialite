@@ -64,7 +64,7 @@ public class TimeLineProvider extends ContentProvider {
                     " likes TEXT, " +
                     " comments TEXT, " +
                     " uid TEXT NOT NULL, " +
-                    " fid TEXT NOT NULL);";
+                    " fid TEXT NOT NULL UNIQUE);";
 
     /**
      * Helper class that actually creates and manages 
@@ -154,6 +154,19 @@ public class TimeLineProvider extends ContentProvider {
         return c;
     }
 
+    boolean fulldelete()
+    {
+        db.execSQL("DROP TABLE IF EXISTS " +  STUDENTS_TABLE_NAME);
+        Context context = getContext();
+        DatabaseHelper dbHelper = new DatabaseHelper(context);
+
+        /**
+         * Create a write able database which will trigger its
+         * creation if it doesn't already exist.
+         */
+        db = dbHelper.getWritableDatabase();
+        return (db == null)? false:true;    }
+
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         int count = 0;
@@ -161,6 +174,7 @@ public class TimeLineProvider extends ContentProvider {
         switch (uriMatcher.match(uri)){
             case TIMELINE:
                 count = db.delete(STUDENTS_TABLE_NAME, selection, selectionArgs);
+                //fulldelete();
                 break;
 
             case SPECIFICPOST:
