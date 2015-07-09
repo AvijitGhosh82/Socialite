@@ -3,11 +3,19 @@ package com.nemesis.minisocialnetwork;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -43,11 +51,32 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private static final int FORECAST_LOADER = 0 ;
     private SwipeRefreshLayout swipeContainer;
     public ListView lv;
     private String uid,token;
+
+    CursorLoaderAdapter adapter =null;
+
+    private static final String[] PROJECTION = {
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            TimeLineProvider.STUDENTS_TABLE_NAME + "." + TimeLineProvider._ID,
+            TimeLineProvider.NAME,
+            TimeLineProvider.POST,
+            TimeLineProvider.LIKES,
+            TimeLineProvider.COMMENTS,
+            TimeLineProvider.UID,
+            TimeLineProvider.FID
+    };
+
+
     OnItemClickedListener sDummyCallbacks = new OnItemClickedListener() {
         @Override
         public void onItemSelected(Bundle bundle) {
@@ -91,6 +120,8 @@ public class HomeFragment extends Fragment {
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);
+
+        adapter=new CursorLoaderAdapter(getActivity(), null, token, isNetworkAvailable());
 
 
         swipeContainer = (SwipeRefreshLayout) v.findViewById(R.id.swipeContainer);
@@ -197,6 +228,13 @@ public class HomeFragment extends Fragment {
     }
 
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(FORECAST_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+
 
 
     @Override
@@ -213,6 +251,34 @@ public class HomeFragment extends Fragment {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        CursorLoader loader = new CursorLoader(
+                this.getActivity(),
+                TimeLineProvider.CONTENT_URI,
+                PROJECTION,
+                null,
+                null,
+                null);
+        return loader;
+    }
+
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+
+           adapter.swapCursor(cursor);
+           lv.setAdapter(adapter);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+
+    }
+
+
 
     public interface OnItemClickedListener {
         void onItemSelected(Bundle bundle);
@@ -443,6 +509,27 @@ public class HomeFragment extends Fragment {
                 String uid=head.getString(OWM_HEAD_UID);
 
                 resultp[i]=new Post(headby,headtext,timest,numcomm,numlikes,fid,uid,likes);
+
+                ContentValues values = new ContentValues();
+
+                values.put(TimeLineProvider.NAME,headby);
+                values.put(TimeLineProvider.POST,headtext);
+                values.put(TimeLineProvider.LIKES,numlikes);
+                values.put(TimeLineProvider.UID,uid);
+                values.put(TimeLineProvider.FID,fid);
+                values.put(TimeLineProvider.COMMENTS,numcomm);
+
+
+                final Uri uri = getActivity().getContentResolver().insert(
+                        TimeLineProvider.CONTENT_URI, values);
+
+
+               /* Handler handler =  new Handler(getActivity().getMainLooper());
+                handler.post( new Runnable(){
+                    public void run(){
+                        Toast.makeText(getActivity(),
+                                uri.toString(), Toast.LENGTH_LONG).show();                    }
+                });*/
             }
 
 
@@ -454,8 +541,10 @@ public class HomeFragment extends Fragment {
         protected void onPostExecute(final Post[] postarray) {
 
             if(postarray!=null) {
-                TimelineAdapter mForeCastAdapter = new TimelineAdapter(getActivity(), postarray, isNetworkAvailable());
-                lv.setAdapter(mForeCastAdapter);
+                //TimelineAdapter mForeCastAdapter = new TimelineAdapter(getActivity(), postarray, isNetworkAvailable());
+                //lv.setAdapter(mForeCastAdapter);
+                //lv.setAdapter(adapter);
+
                 if(mListInstanceState!=null)
                 {
                     lv.onRestoreInstanceState(mListInstanceState);
