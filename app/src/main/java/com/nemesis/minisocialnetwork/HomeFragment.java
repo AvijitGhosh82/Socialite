@@ -3,25 +3,23 @@ package com.nemesis.minisocialnetwork;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ContentValues;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
-
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,21 +32,19 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import net.i2p.android.ext.floatingactionbutton.FloatingActionButton;
+import com.nemesis.minisocialnetwork.data.CursorLoaderAdapter;
+import com.nemesis.minisocialnetwork.data.TimeLineProvider;
+import com.nemesis.minisocialnetwork.sync.TimeLineSyncAdapter;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import net.i2p.android.ext.floatingactionbutton.FloatingActionButton;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 
 
 public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -98,12 +94,33 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public void onResume() {
         super.onResume();
-
+        getActivity().registerReceiver(syncFinishedReceiver, new IntentFilter("SYNC_FINISHED"));
             lv.setItemChecked(mCurCheckPosition, true);
 
     }
 
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().unregisterReceiver(syncFinishedReceiver);
+    }
+
+    private BroadcastReceiver syncFinishedReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //Log.d(Const.TAG, "Sync finished, should refresh nao!!");
+            swipeContainer.setRefreshing(false);
+
+        }
+    };
+
+    void updateTimeline()
+    {
+        TimeLineSyncAdapter.syncImmediately(getActivity());
+
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -132,20 +149,14 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 // Your code to refresh the list here.
                 // Make sure you call swipeContainer.setRefreshing(false)
                 // once the network request has completed successfully.
-                FetchWeatherTask fw=new FetchWeatherTask();
-                fw.execute();
+                updateTimeline();
             }
         });
+
         swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
                 android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
-
-
-        FetchWeatherTask fw=new FetchWeatherTask();
-        fw.execute();
-
-
 
 
 
@@ -193,12 +204,13 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         lv = (ListView) v.findViewById(R.id.timelinelistview);
 
 
-
-
-
-        fw=new FetchWeatherTask();
-        fw.execute();
         setHasOptionsMenu(true);
+
+        if(isNetworkAvailable())
+            updateTimeline();
+        else
+            Toast.makeText(getActivity(),"App is offline.",Toast.LENGTH_SHORT).show();
+
 
         return v; // We must return the loaded Layout
     }
@@ -217,6 +229,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+
     }
 
 
@@ -255,7 +268,57 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
            adapter.swapCursor(cursor);
            lv.setAdapter(adapter);
-    }
+
+        if(mListInstanceState!=null)
+        {
+            lv.onRestoreInstanceState(mListInstanceState);
+            lv.setItemChecked(mCurCheckPosition, true);
+            /*if (mCurCheckPosition != ListView.INVALID_POSITION) {
+                // If we don't need to restart the loader, and there's a desired position to restore
+                // to, do so now.
+                lv.smoothScrollToPosition(mCurCheckPosition);
+            }*/
+        }
+
+        cursor.moveToFirst();
+        cursor.moveToPosition(0);
+        int size=cursor.getCount();
+        if(size!=0)
+        {
+            final String[] fidarray= new String[size];
+            final String[] uidarray= new String[size];
+            final String[] namearray= new String[size];
+            final String[] postarray= new String[size];
+
+
+            for(int i=0;i<size;i++){
+                fidarray[i]=cursor.getString(cursor
+                        .getColumnIndex(TimeLineProvider.FID));
+                uidarray[i]=cursor.getString(cursor
+                        .getColumnIndex(TimeLineProvider.UID));
+                namearray[i]=cursor.getString(cursor
+                        .getColumnIndex(TimeLineProvider.NAME));
+                postarray[i]=cursor.getString(cursor
+                        .getColumnIndex(TimeLineProvider.POST));
+                cursor.moveToNext();
+            }
+
+
+        //mListener.OnItemClicked(Parameters params);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,
+                                    long id) {
+                Bundle bundle = new Bundle();
+                bundle.putString("fid", fidarray[position]);
+                bundle.putString("uid", uidarray[position]);
+                bundle.putString("name", namearray[position]);
+                bundle.putString("text", postarray[position]);
+                mCurCheckPosition=position;
+                mListener.onItemSelected(bundle);
+            }
+        });
+    }}
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
@@ -295,7 +358,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     }
 
 
-    public class FetchWeatherTask extends AsyncTask<Void, Void, Post[]> {
+    /*public class FetchWeatherTask extends AsyncTask<Void, Void, Post[]> {
         String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         String postcode = null;
@@ -344,24 +407,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
 
             try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are available at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
-                /*String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
-                String QUERY_PARAM = "q";
-                String FORMATS_PARAM = "mode", DAYS_PARAM = "cnt", UNITS_PARAM = "units";
 
-                Uri builtUri = Uri.parse(BASE_URL).buildUpon()
-                        .appendQueryParameter(QUERY_PARAM, postcode)
-                        .appendQueryParameter(FORMATS_PARAM, "json")
-                        .appendQueryParameter(UNITS_PARAM, "metric")
-                        .appendQueryParameter(DAYS_PARAM, "7")
-                        .build();*/
                 URL url = new URL("http://www.api.wavit.co/v1.1/index.php/feed/"+token);
-                //URL url=new URL(builtUri.toString());
 
-                //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
-                // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
                 urlConnection.connect();
@@ -418,9 +466,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         }
 
 
-        /* The date/time conversion code is going to be moved outside the asynctask later,
-         * so for convenience we're breaking it out into its own method now.
-         */
+
         private String getReadableDateString(long time) {
             // Because the API returns a unix timestamp (measured in seconds),
             // it must be converted to milliseconds in order to be converted to valid date.
@@ -428,18 +474,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             return shortenedDateFormat.format(time);
         }
 
-        /**
-         * Prepare the weather high/lows for presentation.
-         */
 
 
-        /**
-         * Take the String representing the complete forecast in JSON Format and
-         * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p/>
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-         * into an Object hierarchy for us.
-         */
+
         private Post[] getWeatherDataFromJson(String forecastJsonStr)
                 throws JSONException {
 
@@ -474,9 +511,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             Post[] resultp = new Post[headArray.length()];
             for (int i = 0; i < headArray.length(); i++) {
 
-                /*String[] headby = new String[headArray.length()];
-                String[] headtext= new String[headArray.length()];;
-                String[] time= new String[headArray.length()];*/
+
 
 
                 JSONObject head = headArray.getJSONObject(i);
@@ -513,12 +548,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
 
 
-               /* Handler handler =  new Handler(getActivity().getMainLooper());
-                handler.post( new Runnable(){
-                    public void run(){
-                        Toast.makeText(getActivity(),
-                                uri.toString(), Toast.LENGTH_LONG).show();                    }
-                });*/
+
             }
 
 
@@ -534,32 +564,13 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 //lv.setAdapter(mForeCastAdapter);
                 //lv.setAdapter(adapter);
 
-                if(mListInstanceState!=null)
-                {
-                    lv.onRestoreInstanceState(mListInstanceState);
-                    lv.setItemChecked(mCurCheckPosition, true);
-                }
 
-                //mListener.OnItemClicked(Parameters params);
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position,
-                                            long id) {
-                        Bundle bundle = new Bundle();
-                        bundle.putString("fid", postarray[position].fid);
-                        bundle.putString("uid", postarray[position].uid);
-                        bundle.putString("name", postarray[position].headby);
-                        bundle.putString("text", postarray[position].headtext);
-                        mCurCheckPosition=position;
-                        mListener.onItemSelected(bundle);
-                    }
-                });
 
                 swipeContainer.setRefreshing(false);
             }
 
         }
-    }
+    }*/
 
 
 
@@ -647,20 +658,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
 
                 return sb.toString();
-                /*Writer writer = new OutputStreamWriter(connection.getOutputStream());
-                JSONObject jsonParam = new JSONObject();
-                try {
-                    jsonParam.put("post_text", posttxt);
-                    jsonParam.put("type", type);
-                    jsonParam.put("files", "");
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                writer.write(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-                writer.flush();
-                writer.close();*/
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -687,8 +685,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         protected void onPostExecute(String s) {
 
             //super.onPostExecute(postarray);
-            FetchWeatherTask fw=new FetchWeatherTask();
-            fw.execute();
+            updateTimeline();
 
             Toast.makeText(getActivity(), s, Toast.LENGTH_SHORT).show();
 

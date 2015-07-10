@@ -4,4 +4,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_detailed_post">DetailedPostActivity</string>
+    <string name="sync_account_type">wavit.co</string>
+    <string name="content_authority">com.nemesis.minisocialnetwork.timeline</string>
+
 </resources>

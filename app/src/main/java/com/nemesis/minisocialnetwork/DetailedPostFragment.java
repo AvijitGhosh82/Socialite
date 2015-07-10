@@ -1,7 +1,14 @@
 package com.nemesis.minisocialnetwork;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -37,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 
 public class DetailedPostFragment extends Fragment {
@@ -49,6 +57,41 @@ public class DetailedPostFragment extends Fragment {
     private ShareActionProvider mShareActionProvider;
     private String t;
     private TextView tv2;
+    ImageView iv2;
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().registerReceiver(syncFinishedReceiver, new IntentFilter("SYNC_LIKE"));
+
+    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().unregisterReceiver(syncFinishedReceiver);
+    }
+
+    private BroadcastReceiver syncFinishedReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            SharedPreferences preflikes = getActivity().getSharedPreferences("LikeStatus", getActivity().MODE_PRIVATE);
+
+            if(preflikes.getBoolean(f,false)==true)
+            {
+                tv2.setText("You favourited this.");
+                iv2.setVisibility(View.VISIBLE);
+            }
+            else {
+                tv2.setText("");
+                iv2.setVisibility(View.INVISIBLE);
+            }
+
+        }
+    };
 
 
 
@@ -71,6 +114,8 @@ public class DetailedPostFragment extends Fragment {
             t = bundle.getString("text");
        }
 
+
+
         ImageButton sh=(ImageButton)v.findViewById(R.id.sharebut);
         if(sh!=null)
         {
@@ -92,20 +137,50 @@ public class DetailedPostFragment extends Fragment {
         }
 
         tv2=(TextView)v.findViewById(R.id.liketext);
+        iv2=(ImageView)v.findViewById(R.id.likpic);
+
+        SharedPreferences preflikes = getActivity().getSharedPreferences("LikeStatus", getActivity().MODE_PRIVATE);
+
+        if(preflikes.getBoolean(f,false)==true)
+        {
+            tv2.setText("You favourited this.");
+            iv2.setVisibility(View.VISIBLE);
+        }
+        else {
+            tv2.setText("");
+            iv2.setVisibility(View.INVISIBLE);
+        }
+
 
         SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
-        uid=pref.getString("uid", null);
         token=pref.getString("token", null);
         TextView tv=(TextView)v.findViewById(R.id.user);
         tv.setText(n);
-        TextView tv2=(TextView)v.findViewById(R.id.text);
-        tv2.setText(t);
+        TextView tv3=(TextView)v.findViewById(R.id.text);
+        tv3.setText(t);
         FetchCommTask fc=new FetchCommTask(f);
         fc.execute();
         ImageView av=(ImageView)v.findViewById(R.id.avataru);
-        String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
-        Picasso.with(getActivity()).load(imgURI).into(av);
+        if(isNetworkAvailable())
+
+        {
+            String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
+            Picasso.with(getActivity()).load(imgURI).into(av);
+        }
+        else{
+
+            final Resources res = getActivity().getResources();
+            final int tileSize = res.getDimensionPixelSize(R.dimen.letter_tile_size);
+            Random ran=new Random();
+            int key=ran.nextInt(8);
+            final LetterTileProvider tileProvider = new LetterTileProvider(getActivity());
+            final Bitmap letterTile = tileProvider.getLetterTile(n, key+"", tileSize, tileSize);
+
+            av.setImageBitmap(letterTile);
+            //av.setImageResource(R.drawable.me);
+
+        }
 
 
 
@@ -129,13 +204,24 @@ public class DetailedPostFragment extends Fragment {
             }
         });
 
+        if(!isNetworkAvailable())
+        {
+            edittext.setHint("Comments not available (offline)");
+            edittext.setEnabled(false);
+        }
+
         setHasOptionsMenu(true);
 
 
         return v;
     }
 
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
 
     private Intent createShareIntent() {
@@ -405,7 +491,7 @@ public class DetailedPostFragment extends Fragment {
             {CommentAdapter c=new CommentAdapter(getActivity(),commarray, uidarray,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()));
                 lv.setAdapter(c);}
 
-            tv2.setText(likelist);
+          //  tv2.setText(likelist);
             super.onPostExecute(aVoid);
         }
     }

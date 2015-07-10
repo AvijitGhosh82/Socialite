@@ -72,6 +72,8 @@
                             android:text="Random User"
                             android:id="@+id/user"
                             android:gravity="center"
+                            android:textColor="@color/primarytext"
+
                             android:textStyle="bold"
                             android:textSize="20dp"
                             android:layout_width="wrap_content"
@@ -79,6 +81,8 @@
                         <TextView
                             android:layout_marginLeft="20dp"
                             android:text=""
+                            android:textColor="@color/primarytext"
+
                             android:textAllCaps="true"
                             android:layout_marginBottom="10dp"
                             android:id="@+id/design"
@@ -96,6 +100,8 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginBottom="10dp"
                     android:id="@+id/text"
+                    android:textColor="@color/primarytext"
+
                     android:textSize="18dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
@@ -131,6 +137,8 @@
                                 android:gravity="center"
                                 android:textSize="12dp"
                                 android:singleLine="true"
+                                android:textColor="@color/primarytext"
+
                                 android:id="@+id/liketext"
                                 android:text="No likes"/>
                         </LinearLayout>

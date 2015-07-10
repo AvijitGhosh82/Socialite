@@ -33,6 +33,8 @@
             android:layout_marginTop="10dp"
             android:text="Random User"
             android:id="@+id/user"
+            android:textColor="@color/primarytext"
+
             android:gravity="center"
             android:textStyle="bold"
             android:textSize="20dp"
@@ -54,6 +56,7 @@
             android:text="Hi, this is a sample text written by me."
             android:layout_marginLeft="10dp"
             android:layout_marginBottom="10dp"
+            android:textColor="@color/primarytext"
             android:id="@+id/text"
             android:textSize="18dp"
             android:layout_width="wrap_content"
@@ -76,7 +79,7 @@
                     android:layout_width="fill_parent"
 
                     android:layout_height="fill_parent">
-                <ImageView
+                <!--<ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:id="@+id/likpic"
@@ -90,7 +93,17 @@
                     android:gravity="center"
                     android:textSize="11dp"
                     android:id="@+id/liketext"
-                    android:text="Upvote"/>
+                    android:text="Upvote"/>-->
+                    <CheckBox
+                        android:layout_width="fill_parent"
+                        android:layout_height="30dp"
+                        android:id="@+id/likebox"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:button="@drawable/thumbs"
+                        android:textColor="@color/primarytext"
+                        android:text="Favorite"
+                        android:textSize="12dp" />
                 </LinearLayout>
             </RelativeLayout>
 
@@ -110,17 +123,18 @@
                     android:layout_marginRight="20dp"
                     android:layout_height="fill_parent">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:layout_marginRight="10dp"
                         android:id="@+id/compic"
                         android:background="@drawable/comment"
                         ></ImageView>
                     <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="20dp"
+                        android:layout_height="30dp"
                         android:gravity="center"
-                        android:textSize="11dp"
+                        android:textSize="12dp"
+                        android:textColor="@color/primarytext"
                         android:id="@+id/comenttext"
                         android:text="Comment"/>
                 </LinearLayout>

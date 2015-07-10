@@ -69,6 +69,8 @@
                             android:layout_marginLeft="20dp"
                             android:layout_marginTop="4dp"
                             android:text="Random User"
+                            android:textColor="@color/primarytext"
+
                             android:id="@+id/user"
                             android:gravity="center"
                             android:textStyle="bold"
@@ -78,6 +80,8 @@
                         <TextView
                             android:layout_marginLeft="20dp"
                             android:text=""
+                            android:textColor="@color/primarytext"
+
                             android:textAllCaps="true"
                             android:layout_marginBottom="10dp"
                             android:id="@+id/design"
@@ -95,6 +99,7 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginBottom="10dp"
                     android:id="@+id/text"
+                    android:textColor="@color/primarytext"
                     android:textSize="18dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
@@ -129,6 +134,8 @@
                                 android:layout_height="20dp"
                                 android:gravity="center"
                                 android:textSize="12dp"
+                                android:textColor="@color/primarytext"
+
                                 android:singleLine="true"
                                 android:id="@+id/liketext"
                                 android:text="No likes"/>

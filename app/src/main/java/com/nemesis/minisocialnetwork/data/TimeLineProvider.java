@@ -1,4 +1,4 @@
-package com.nemesis.minisocialnetwork;
+package com.nemesis.minisocialnetwork.data;
 
 /**
  * Created by Avijit Ghosh on 08 Jul 2015.
@@ -22,11 +22,11 @@ import java.util.HashMap;
 
 public class TimeLineProvider extends ContentProvider {
 
-    static final String PROVIDER_NAME = "com.nemesis.minisocialnetwork.timeline";
-    static final String URL = "content://" + PROVIDER_NAME + "/timeline";
-    static final Uri CONTENT_URI = Uri.parse(URL);
+    public static final String PROVIDER_NAME = "com.nemesis.minisocialnetwork.timeline";
+    public static final String URL = "content://" + PROVIDER_NAME + "/timeline";
+    public static final Uri CONTENT_URI = Uri.parse(URL);
 
-    static final String _ID = "_id";
+    public static final String _ID = "_id";
 
 
     public static final String NAME = "name";
@@ -35,6 +35,7 @@ public class TimeLineProvider extends ContentProvider {
     public static final String COMMENTS= "comments";
     public static final String UID= "uid";
     public static final String FID= "fid";
+
 
 
     private static HashMap<String, String> STUDENTS_PROJECTION_MAP;
@@ -47,14 +48,15 @@ public class TimeLineProvider extends ContentProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(PROVIDER_NAME, "timeline", TIMELINE);
         uriMatcher.addURI(PROVIDER_NAME, "timeline/*", SPECIFICPOST);
+
     }
 
     /**
      * Database specific constant declarations
      */
     private SQLiteDatabase db;
-    static final String DATABASE_NAME = "minisocial.db";
-    static final String STUDENTS_TABLE_NAME = "timeline";
+    public static final String DATABASE_NAME = "minisocial.db";
+    public static final String STUDENTS_TABLE_NAME = "timeline";
     static final int DATABASE_VERSION = 1;
     static final String CREATE_DB_TABLE =
             " CREATE TABLE " + STUDENTS_TABLE_NAME +
@@ -154,18 +156,7 @@ public class TimeLineProvider extends ContentProvider {
         return c;
     }
 
-    boolean fulldelete()
-    {
-        db.execSQL("DROP TABLE IF EXISTS " +  STUDENTS_TABLE_NAME);
-        Context context = getContext();
-        DatabaseHelper dbHelper = new DatabaseHelper(context);
 
-        /**
-         * Create a write able database which will trigger its
-         * creation if it doesn't already exist.
-         */
-        db = dbHelper.getWritableDatabase();
-        return (db == null)? false:true;    }
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -174,7 +165,6 @@ public class TimeLineProvider extends ContentProvider {
         switch (uriMatcher.match(uri)){
             case TIMELINE:
                 count = db.delete(STUDENTS_TABLE_NAME, selection, selectionArgs);
-                //fulldelete();
                 break;
 
             case SPECIFICPOST:

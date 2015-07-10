@@ -8,7 +8,7 @@ public class Post
     public String numlikes;
     public String fid,uid;
     public String numcomm;
-    Post(String headby, String headtext, String timestamp, String numcomm, String numlikes, String fid, String uid, String likes)
+    public Post(String headby, String headtext, String timestamp, String numcomm, String numlikes, String fid, String uid, String likes)
     {
         this.headby=headby;
         this.headtext=headtext;

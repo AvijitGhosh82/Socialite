@@ -12,6 +12,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+import com.nemesis.minisocialnetwork.sync.TimeLineSyncAdapter;
+
 
 public class Home extends ActionBarActivity implements HomeFragment.OnItemClickedListener{
 
@@ -40,6 +42,7 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
             //return;
         }
 
+        TimeLineSyncAdapter.initializeSyncAdapter(this, token);
 
 
 
