@@ -117,7 +117,7 @@ public class TimeLineProvider extends ContentProvider {
         if (rowID > 0)
         {
             Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
-            getContext().getContentResolver().notifyChange(_uri, null);
+            getContext().getContentResolver().notifyChange(uri, null);
             return _uri;
         }
         throw new SQLException("Failed to add a record into " + uri);
@@ -147,11 +147,13 @@ public class TimeLineProvider extends ContentProvider {
              */
             sortOrder = _ID;
         }
-        Cursor c = qb.query(db,	projection,	selection, selectionArgs,null, null, null);
+        Cursor c = qb.query(db,	projection,	selection, selectionArgs,null, null, sortOrder);
 
         /**
          * register to watch a content URI for changes
+         *
          */
+
         c.setNotificationUri(getContext().getContentResolver(), uri);
         return c;
     }

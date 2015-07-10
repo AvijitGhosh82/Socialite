@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -54,6 +55,11 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     public ListView lv;
     private String uid,token;
 
+    FrameLayout container;
+
+
+
+
     CursorLoaderAdapter adapter =null;
 
     private static final String[] PROJECTION = {
@@ -75,34 +81,28 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
     OnItemClickedListener sDummyCallbacks = new OnItemClickedListener() {
         @Override
-        public void onItemSelected(Bundle bundle) {
+        public void onItemSelected(String s) {
 
         }
 
     };
     private OnItemClickedListener mListener=sDummyCallbacks ;
-    private Parcelable mListInstanceState;
-    private int mCurCheckPosition;
+    private Parcelable state;
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt("curChoice", mCurCheckPosition);
-        outState.putParcelable("LIST_INSTANCE_STATE", lv.onSaveInstanceState());
-    }
+
 
     @Override
     public void onResume() {
         super.onResume();
         getActivity().registerReceiver(syncFinishedReceiver, new IntentFilter("SYNC_FINISHED"));
-            lv.setItemChecked(mCurCheckPosition, true);
-
     }
 
 
     @Override
     public void onPause() {
         super.onPause();
+        state = lv.onSaveInstanceState();
+
         getActivity().unregisterReceiver(syncFinishedReceiver);
     }
 
@@ -128,15 +128,14 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         // Replace LinearLayout by the type of the root element of the layout you're trying to load
         View v    = (View) inflater.inflate(R.layout.fragment_home, container, false);
 
-        if(savedInstanceState!=null) {
-            mListInstanceState = savedInstanceState.getParcelable("LIST_INSTANCE_STATE");
-        }
         //llLayout.findViewById(R.id.someGuiElement);
 
         SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);
+
+
 
         adapter=new CursorLoaderAdapter(getActivity(), null, token, isNetworkAvailable());
 
@@ -204,6 +203,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         lv = (ListView) v.findViewById(R.id.timelinelistview);
 
 
+
+
+
         setHasOptionsMenu(true);
 
         if(isNetworkAvailable())
@@ -212,7 +214,23 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             Toast.makeText(getActivity(),"App is offline.",Toast.LENGTH_SHORT).show();
 
 
+
+        lv.setAdapter(adapter);
+        if(state != null) {
+            lv.onRestoreInstanceState(state);
+        }
+
         return v; // We must return the loaded Layout
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // When tablets rotate, the currently selected list item needs to be saved.
+        // When no item is selected, mPosition will be set to Listview.INVALID_POSITION,
+        // so check for that before storing.
+
+        super.onSaveInstanceState(outState);
     }
 
 
@@ -258,48 +276,33 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 PROJECTION,
                 null,
                 null,
-                null);
+                TimeLineProvider._ID+" DESC"
+                );
         return loader;
     }
+
 
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
 
-           adapter.swapCursor(cursor);
-           lv.setAdapter(adapter);
+        adapter.swapCursor(cursor);
 
-        if(mListInstanceState!=null)
-        {
-            lv.onRestoreInstanceState(mListInstanceState);
-            lv.setItemChecked(mCurCheckPosition, true);
-            /*if (mCurCheckPosition != ListView.INVALID_POSITION) {
-                // If we don't need to restart the loader, and there's a desired position to restore
-                // to, do so now.
-                lv.smoothScrollToPosition(mCurCheckPosition);
-            }*/
-        }
 
+        //lv.setAdapter(adapter);
+
+        //adapter.notifyDataSetChanged();
         cursor.moveToFirst();
         cursor.moveToPosition(0);
         int size=cursor.getCount();
         if(size!=0)
         {
             final String[] fidarray= new String[size];
-            final String[] uidarray= new String[size];
-            final String[] namearray= new String[size];
-            final String[] postarray= new String[size];
-
 
             for(int i=0;i<size;i++){
                 fidarray[i]=cursor.getString(cursor
                         .getColumnIndex(TimeLineProvider.FID));
-                uidarray[i]=cursor.getString(cursor
-                        .getColumnIndex(TimeLineProvider.UID));
-                namearray[i]=cursor.getString(cursor
-                        .getColumnIndex(TimeLineProvider.NAME));
-                postarray[i]=cursor.getString(cursor
-                        .getColumnIndex(TimeLineProvider.POST));
+
                 cursor.moveToNext();
             }
 
@@ -309,15 +312,12 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
-                Bundle bundle = new Bundle();
-                bundle.putString("fid", fidarray[position]);
-                bundle.putString("uid", uidarray[position]);
-                bundle.putString("name", namearray[position]);
-                bundle.putString("text", postarray[position]);
-                mCurCheckPosition=position;
-                mListener.onItemSelected(bundle);
+
+                mListener.onItemSelected(fidarray[position]);
             }
         });
+
+
     }}
 
     @Override
@@ -329,7 +329,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
 
     public interface OnItemClickedListener {
-        void onItemSelected(Bundle bundle);
+        void onItemSelected(String s);
     }
 
     @Override
@@ -356,221 +356,6 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         dialog.getWindow().setAttributes(lp);
     }
-
-
-    /*public class FetchWeatherTask extends AsyncTask<Void, Void, Post[]> {
-        String LOG_TAG = FetchWeatherTask.class.getSimpleName();
-
-        String postcode = null;
-
-        public FetchWeatherTask() {
-
-        }
-
-        private boolean isNetworkAvailable() {
-            ConnectivityManager connectivityManager
-                    = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-        }
-
-
-        @Override
-        protected Post[] doInBackground(Void... params) {
-
-            Post[] postarray=null;
-
-            SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
-            SharedPreferences.Editor editor = pref.edit();
-            String jsondata=pref.getString("timeline_json", null);
-            if(!isNetworkAvailable())
-            {
-                try {
-                    if(jsondata!=null)
-                        postarray = getWeatherDataFromJson(jsondata);
-                    return postarray;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-
-
-
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
-
-
-            try {
-
-                URL url = new URL("http://www.api.wavit.co/v1.1/index.php/feed/"+token);
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("POST");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                forecastJsonStr = buffer.toString();
-                editor.putString("timeline_json", forecastJsonStr);
-                editor.commit();
-                try {
-
-                    postarray = getWeatherDataFromJson(forecastJsonStr);
-                } catch (JSONException j) {
-                    return null;
-                }
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attempting
-                // to parse it.
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e("PlaceholderFragment", "Error closing stream", e);
-                    }
-                }
-            }
-
-            return postarray;
-        }
-
-
-
-        private String getReadableDateString(long time) {
-            // Because the API returns a unix timestamp (measured in seconds),
-            // it must be converted to milliseconds in order to be converted to valid date.
-            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
-            return shortenedDateFormat.format(time);
-        }
-
-
-
-
-        private Post[] getWeatherDataFromJson(String forecastJsonStr)
-                throws JSONException {
-
-            // These are the names of the JSON objects that need to be extracted.
-            final String OWM_HEAD = "feed_head";
-            final String OWM_DATA = "feed_data";
-            final String OWM_HEAD_TEXT = "post_text";
-            final String OWM_HEAD_BY = "posted_by_name";
-            final String OWM_HEAD_TIME = "timestamp";
-            final String OWM_DATA_NUM_LIKES = "no_likes";
-            final String OWM_HEAD_NUM_COMMENTS = "no_comments";
-            final String OWM_DATA_COMMENTS = "comments";
-            final String OWM_DATA_LIKES = "likes";
-            final String OWM_HEAD_FID = "id";
-            final String OWM_HEAD_UID = "posted_by";
-
-
-            JSONObject forecastJson = new JSONObject(forecastJsonStr);
-            JSONArray headArray = forecastJson.getJSONArray(OWM_HEAD);
-            JSONArray dataArray = forecastJson.getJSONArray(OWM_DATA);
-
-            // OWM returns daily forecasts based upon the local time of the city that is being
-            // asked for, which means that we need to know the GMT offset to translate this data
-            // properly.
-
-            // Since this data is also sent in-order and the first day is always the
-            // current day, we're going to take advantage of that to get a nice
-            // normalized UTC date for all of our weather.
-
-            //getActivity().getContentResolver().delete(TimeLineProvider.CONTENT_URI,null,null);
-
-            Post[] resultp = new Post[headArray.length()];
-            for (int i = 0; i < headArray.length(); i++) {
-
-
-
-
-                JSONObject head = headArray.getJSONObject(i);
-
-
-                String headby = head.getString(OWM_HEAD_BY);
-                String headtext = head.getString(OWM_HEAD_TEXT);
-                String timest = head.getString(OWM_HEAD_TIME);
-
-                JSONObject data = dataArray.getJSONObject(i);
-                String likes=data.getString(OWM_DATA_LIKES);
-                String numlikes = data.getString(OWM_DATA_NUM_LIKES);
-                String numcomm = head.getString(OWM_HEAD_NUM_COMMENTS);
-                String fid=head.getString(OWM_HEAD_FID);
-                String uid=head.getString(OWM_HEAD_UID);
-
-                resultp[i]=new Post(headby,headtext,timest,numcomm,numlikes,fid,uid,likes);
-
-                ContentValues values = new ContentValues();
-
-                values.put(TimeLineProvider.NAME,headby);
-                values.put(TimeLineProvider.POST,headtext);
-                values.put(TimeLineProvider.LIKES,numlikes);
-                values.put(TimeLineProvider.UID,uid);
-                values.put(TimeLineProvider.FID,fid);
-                values.put(TimeLineProvider.COMMENTS,numcomm);
-
-
-                try{
-                    final Uri uri = getActivity().getContentResolver().insert(
-                            TimeLineProvider.CONTENT_URI, values);}
-                catch (Exception e)
-                {}
-
-
-
-
-            }
-
-
-            return  resultp;
-
-        }
-
-        @Override
-        protected void onPostExecute(final Post[] postarray) {
-
-            if(postarray!=null) {
-                //TimelineAdapter mForeCastAdapter = new TimelineAdapter(getActivity(), postarray, isNetworkAvailable());
-                //lv.setAdapter(mForeCastAdapter);
-                //lv.setAdapter(adapter);
-
-
-
-                swipeContainer.setRefreshing(false);
-            }
-
-        }
-    }*/
 
 
 
@@ -689,6 +474,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
             Toast.makeText(getActivity(), s, Toast.LENGTH_SHORT).show();
 
+            //getLoaderManager().initLoader(FORECAST_LOADER, null, HomeFragment.this);
+           // getLoaderManager().restartLoader(FORECAST_LOADER, null, HomeFragment.this);
+            // getLoaderManager().getLoader(FORECAST_LOADER).onContentChanged();
 
 
         }

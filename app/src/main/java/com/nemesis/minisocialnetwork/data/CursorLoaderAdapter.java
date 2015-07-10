@@ -105,10 +105,12 @@ public class CursorLoaderAdapter extends CursorAdapter {
         tv1.setText(name);
         tv2.setText(post);
 
-        tv4.setText("Comments ("+comments+")");
+        //tv4.setText("Comments ("+comments+")");
+        tv4.setText("Comments");
 
 
-        //The web api for the like function is buggy,
+
+        //The web api for the LIKE function is buggy,
         // until it is fixed, I'm saving the likes locally in sharedprefernces using a checkbox.
 
         CheckBox cb=(CheckBox)row.findViewById(R.id.likebox);

@@ -229,7 +229,8 @@ public class TimeLineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             try{
                 final Uri uri = getContext().getContentResolver().insert(
-                        TimeLineProvider.CONTENT_URI, values);}
+                        TimeLineProvider.CONTENT_URI, values);
+            }
             catch (Exception e)
             {
                 //Only unique post ids are added in table

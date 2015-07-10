@@ -6,12 +6,16 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
@@ -28,6 +32,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.nemesis.minisocialnetwork.data.TimeLineProvider;
+import com.nemesis.minisocialnetwork.sync.TimeLineSyncAdapter;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -47,17 +53,37 @@ import java.util.Date;
 import java.util.Random;
 
 
-public class DetailedPostFragment extends Fragment {
+public class DetailedPostFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
     String[] commarray = null,uidarray=null;
     private ListView lv;
-    private String f;
+    private String f=null;
     private String likelist;
     private String timestamp;
     private String uid,token;
     private ShareActionProvider mShareActionProvider;
-    private String t;
     private TextView tv2;
     ImageView iv2;
+    int DETAIL_LOADER=0;
+    String n,u,t;
+
+
+    private static final String[] PROJECTION = {
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            TimeLineProvider.STUDENTS_TABLE_NAME + "." + TimeLineProvider._ID,
+            TimeLineProvider.NAME,
+            TimeLineProvider.POST,
+            TimeLineProvider.UID,
+            TimeLineProvider.FID
+    };
+    private ImageButton sh;
+    private TextView tv, tv3;
+    private EditText edittext;
+    private ImageView av;
 
 
     @Override
@@ -82,7 +108,7 @@ public class DetailedPostFragment extends Fragment {
 
             if(preflikes.getBoolean(f,false)==true)
             {
-                tv2.setText("You favourited this.");
+                tv2.setText("You favorited this.");
                 iv2.setVisibility(View.VISIBLE);
             }
             else {
@@ -100,23 +126,162 @@ public class DetailedPostFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+
+            f = bundle.getString("fid");
+        }
+
         View v = (View) inflater.inflate(R.layout.fragment_detail, container, false);
 
         lv = (ListView) v.findViewById(R.id.commlist);
-        Intent intent = getActivity().getIntent();
+
+
+
+
+        sh=(ImageButton)v.findViewById(R.id.sharebut);
+
+
+        tv2=(TextView)v.findViewById(R.id.liketext);
+        iv2=(ImageView)v.findViewById(R.id.likpic);
+
+        SharedPreferences preflikes = getActivity().getSharedPreferences("LikeStatus", getActivity().MODE_PRIVATE);
+
+        if(preflikes.getBoolean(f,false)==true)
+        {
+            tv2.setText("You favorited this.");
+            iv2.setVisibility(View.VISIBLE);
+        }
+        else {
+            tv2.setText("");
+            iv2.setVisibility(View.INVISIBLE);
+        }
+
+
+        SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        token=pref.getString("token", null);
+        tv=(TextView)v.findViewById(R.id.user);
+        tv3=(TextView)v.findViewById(R.id.text);
+
+        FetchCommTask fc=new FetchCommTask(f);
+        fc.execute();
+
+        av=(ImageView)v.findViewById(R.id.avataru);
+
+
+
+
+
+        edittext = (EditText) v.findViewById(R.id.edittext);
+
+
+        setHasOptionsMenu(true);
+
+
+        return v;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+
+    private Intent createShareIntent() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+
+        String forecastStr=t;
+
+        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                forecastStr+ " #MyTimeLine");
+        return shareIntent;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+        inflater.inflate(R.menu.menu_detailed_post, menu);
+
+
+        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
+// Get the provider and hold onto it to set/change the share intent.
+        ShareActionProvider mShareActionProvider =
+                (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+        if (mShareActionProvider != null ) {
+            mShareActionProvider.setShareIntent(createShareIntent());
+        } else {
+            //Log.d(LOG_TAG, "Share Action Provider is null?");
+
+        };
+    }
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
         Bundle bundle = this.getArguments();
         String n = null,u=null,t=null;
         if (bundle != null) {
 
             f = bundle.getString("fid");
-            n = bundle.getString("name");
-            u = bundle.getString("uid");
-            t = bundle.getString("text");
-       }
+        }
+        if ( null != f ) {
+            // Now create and return a CursorLoader that will take care of
+            // creating a Cursor for the data being displayed.
+            return new CursorLoader(
+                    getActivity(),
+                    TimeLineProvider.CONTENT_URI,
+                    PROJECTION,
+                    TimeLineProvider.FID+" = "+f,
+                    null,
+                    null
+            );
 
 
+        }
+        else
+        {
+            return new CursorLoader(
+                    getActivity(),
+                    TimeLineProvider.CONTENT_URI,
+                    PROJECTION,
+                    null,
+                    null,
+                    null
+            );
+        }
+    }
 
-        ImageButton sh=(ImageButton)v.findViewById(R.id.sharebut);
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+                data.moveToPosition(0);
+
+
+        n=data.getString(data.getColumnIndex(TimeLineProvider.NAME));
+        u=data.getString(data.getColumnIndex(TimeLineProvider.UID));
+        t=data.getString(data.getColumnIndex(TimeLineProvider.POST));
+
+
+        FetchCommTask fc=new FetchCommTask(f);
+        fc.execute();
+
         if(sh!=null)
         {
             final String finalT = t;
@@ -136,32 +301,9 @@ public class DetailedPostFragment extends Fragment {
             });
         }
 
-        tv2=(TextView)v.findViewById(R.id.liketext);
-        iv2=(ImageView)v.findViewById(R.id.likpic);
-
-        SharedPreferences preflikes = getActivity().getSharedPreferences("LikeStatus", getActivity().MODE_PRIVATE);
-
-        if(preflikes.getBoolean(f,false)==true)
-        {
-            tv2.setText("You favourited this.");
-            iv2.setVisibility(View.VISIBLE);
-        }
-        else {
-            tv2.setText("");
-            iv2.setVisibility(View.INVISIBLE);
-        }
-
-
-        SharedPreferences pref = getActivity().getSharedPreferences("MyPref", getActivity().MODE_PRIVATE);
-        SharedPreferences.Editor editor = pref.edit();
-        token=pref.getString("token", null);
-        TextView tv=(TextView)v.findViewById(R.id.user);
         tv.setText(n);
-        TextView tv3=(TextView)v.findViewById(R.id.text);
         tv3.setText(t);
-        FetchCommTask fc=new FetchCommTask(f);
-        fc.execute();
-        ImageView av=(ImageView)v.findViewById(R.id.avataru);
+
         if(isNetworkAvailable())
 
         {
@@ -182,10 +324,6 @@ public class DetailedPostFragment extends Fragment {
 
         }
 
-
-
-
-        final EditText edittext = (EditText) v.findViewById(R.id.edittext);
         edittext.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 // If the event is a key-down event on the "enter" button
@@ -210,72 +348,20 @@ public class DetailedPostFragment extends Fragment {
             edittext.setEnabled(false);
         }
 
-        setHasOptionsMenu(true);
 
 
-        return v;
-    }
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
-
-    private Intent createShareIntent() {
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType("text/plain");
-
-        String forecastStr=getActivity().getIntent().getExtras().getString("text");
-
-        shareIntent.putExtra(Intent.EXTRA_TEXT,
-                forecastStr+ " #MyTimeLine");
-        return shareIntent;
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_detailed_post, menu);
+    public void onLoaderReset(Loader<Cursor> loader) {
 
-
-        MenuItem menuItem = menu.findItem(R.id.menu_item_share);
-// Get the provider and hold onto it to set/change the share intent.
-        ShareActionProvider mShareActionProvider =
-                (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
-        /*if(mShareActionProvider==null)
-        {
-            ShareActionProvider mShareActionProvider;
-            mShareActionProvider = new ShareActionProvider(getActivity());
-            mShareActionProvider.setShareIntent(createShareIntent());
-            MenuItemCompat.setActionProvider(menuItem, mShareActionProvider);
-        }*/
-// Attach an intent to this ShareActionProvider. You can update this at any time,
-// like when the user selects a new piece of data they might like to share.
-
-        if (mShareActionProvider != null ) {
-            mShareActionProvider.setShareIntent(createShareIntent());
-        } else {
-            //Log.d(LOG_TAG, "Share Action Provider is null?");
-
-        };
     }
-
-
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        return super.onOptionsItemSelected(item);
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
     }
-
 
 
     public class FetchCommTask extends AsyncTask<Void, Void, Void> {
@@ -596,6 +682,8 @@ public class DetailedPostFragment extends Fragment {
 
             FetchCommTask fc=new FetchCommTask(f);
             fc.execute();
+
+            TimeLineSyncAdapter.syncImmediately(getActivity());
 
 
 

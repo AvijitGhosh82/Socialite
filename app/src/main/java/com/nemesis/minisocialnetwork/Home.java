@@ -8,8 +8,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.nemesis.minisocialnetwork.sync.TimeLineSyncAdapter;
@@ -79,16 +77,17 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
     }
 
     @Override
-    public void onItemSelected(Bundle bundle) {
+    public void onItemSelected(String fid) {
        if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
-           FrameLayout mButton=(FrameLayout)findViewById(R.id.fragment_detail_container);
+          /* FrameLayout mButton=(FrameLayout)findViewById(R.id.fragment_detail_container);
            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mButton.getLayoutParams();
            params.weight = 4.0f;
-           mButton.setLayoutParams(params);
-
+           mButton.setLayoutParams(params);*/
+           Bundle bundle = new Bundle();
+           bundle.putString("fid", fid);
 
             DetailedPostFragment fragment = new DetailedPostFragment();
             fragment.setArguments(bundle);
@@ -98,18 +97,11 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
                     .commit();
        } else {
 
-               String f = bundle.getString("fid");
-               String n = bundle.getString("name");
-               String u = bundle.getString("uid");
-               String t = bundle.getString("text");
-            Intent i = new Intent(this, DetailedPostActivity.class);
-           i.putExtra("fid", f);
-           i.putExtra("uid", u);
-           i.putExtra("name",n);
-           i.putExtra("text", t);
 
-                   // .setData(contentUri);
-            startActivity(i);
+            Intent i = new Intent(this, DetailedPostActivity.class);
+            i.putExtra("fid", fid);
+
+           startActivity(i);
         }
     }
 
