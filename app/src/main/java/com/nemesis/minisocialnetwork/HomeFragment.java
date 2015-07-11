@@ -124,6 +124,15 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Retain this fragment across configuration changes.
+        setRetainInstance(true);
+
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //FragmentActivity    faActivity  = (FragmentActivity)    super.getActivity();
         // Replace LinearLayout by the type of the root element of the layout you're trying to load
@@ -246,6 +255,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+
         getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
 

@@ -65,8 +65,9 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
             // adding or replacing the detail fragment using a
             // fragment transaction.
             if (savedInstanceState == null) {
+                DetailedPostFragment df=new DetailedPostFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_detail_container, new DetailedPostFragment(), DETAILFRAGMENT_TAG)
+                        .replace(R.id.fragment_detail_container, df, DETAILFRAGMENT_TAG)
                         .commit();
             }
         } else {
