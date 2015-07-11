@@ -11,7 +11,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
@@ -108,19 +107,27 @@ public class TimeLineProvider extends ContentProvider {
         /**
          * Add a new student record
          */
-        long rowID = db.insert(	STUDENTS_TABLE_NAME, "", values);
+        try{
+            long rowID = db.insert(	STUDENTS_TABLE_NAME, "", values);
+            if (rowID > 0)
+            {
+                Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return _uri;
+            }
 
+        }
+        catch(Exception e)
+        {
+            //Unique constraint
+        }
         /**
          * If record is added successfully
          */
 
-        if (rowID > 0)
-        {
-            Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
-            getContext().getContentResolver().notifyChange(uri, null);
-            return _uri;
-        }
-        throw new SQLException("Failed to add a record into " + uri);
+
+        //throw new SQLException("Failed to add a record into " + uri);
+        return null;
     }
 
     @Override
