@@ -15,6 +15,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -270,6 +271,8 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        setAutoOrientationEnabled(getActivity(),false);
+
         CursorLoader loader = new CursorLoader(
                 this.getActivity(),
                 TimeLineProvider.CONTENT_URI,
@@ -279,6 +282,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 TimeLineProvider._ID+" DESC"
                 );
         return loader;
+
     }
 
 
@@ -317,12 +321,14 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             }
         });
 
+            setAutoOrientationEnabled(getActivity(), true);
 
     }}
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         adapter.swapCursor(null);
+        setAutoOrientationEnabled(getActivity(),true);
 
     }
 
@@ -482,4 +488,9 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         }
     }
 
+
+    public static void setAutoOrientationEnabled(Context context, boolean enabled)
+    {
+        Settings.System.putInt( context.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, enabled ? 1 : 0);
+    }
 }
