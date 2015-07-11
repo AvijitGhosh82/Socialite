@@ -33,30 +33,45 @@ public class LoginActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
 
-        final EditText login = (EditText) findViewById(R.id.email);
-        final EditText pass = (EditText) findViewById(R.id.password);
-        Button b=(Button)findViewById(R.id.go);
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NewCommTask n=new NewCommTask(login.getText().toString(),pass.getText().toString());
-                n.execute();
+        SharedPreferences pref = getSharedPreferences("MyPref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        String uid = pref.getString("uid", null);
+        String token = pref.getString("token", null);
+
+
+        if (uid == null || token == null) {
+
+            setContentView(R.layout.activity_login);
+
+            final EditText login = (EditText) findViewById(R.id.email);
+            final EditText pass = (EditText) findViewById(R.id.password);
+            Button b=(Button)findViewById(R.id.go);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    NewCommTask n=new NewCommTask(login.getText().toString(),pass.getText().toString());
+                    n.execute();
+                }
+            });
+
+            Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
+            SpannableString s = new SpannableString("Welcome");
+
+
+
+            if(toolbar != null)
+            {
+
+                toolbar.setTitle(s);
+                //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             }
-        });
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
-        SpannableString s = new SpannableString("Welcome");
-
-
-
-        if(toolbar != null)
-        {
-
-            toolbar.setTitle(s);
-            //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        } else {
+            Intent i = new Intent(LoginActivity.this, Home.class);
+            startActivity(i);
+            finish();
         }
+
     }
 
 

@@ -125,8 +125,14 @@ public class DetailedPostFragment extends Fragment implements LoaderManager.Load
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Bundle bundle=null;
+        try{
+            bundle = this.getArguments();
+        }
+        catch(Exception e)
+        {
 
-        Bundle bundle = this.getArguments();
+        }
         if (bundle != null) {
 
             f = bundle.getString("fid");
@@ -264,88 +270,92 @@ public class DetailedPostFragment extends Fragment implements LoaderManager.Load
                     PROJECTION,
                     null,
                     null,
-                    null
+                    TimeLineProvider._ID+" DESC"
             );
         }
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-                data.moveToPosition(0);
+
+        data.moveToPosition(0);
 
 
-        n=data.getString(data.getColumnIndex(TimeLineProvider.NAME));
-        u=data.getString(data.getColumnIndex(TimeLineProvider.UID));
-        t=data.getString(data.getColumnIndex(TimeLineProvider.POST));
+        try {
+            n = data.getString(data.getColumnIndex(TimeLineProvider.NAME));
+            u = data.getString(data.getColumnIndex(TimeLineProvider.UID));
+            t = data.getString(data.getColumnIndex(TimeLineProvider.POST));
 
 
-        FetchCommTask fc=new FetchCommTask(f);
-        fc.execute();
+            FetchCommTask fc = new FetchCommTask(f);
+            fc.execute();
 
-        if(sh!=null)
-        {
-            final String finalT = t;
-            sh.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
+            if (sh != null) {
+                final String finalT = t;
+                sh.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("text/plain");
 
-                    //String forecastStr=getActivity().getIntent().getExtras().getString("text");
+                        //String forecastStr=getActivity().getIntent().getExtras().getString("text");
 
-                    shareIntent.putExtra(Intent.EXTRA_TEXT,
-                            finalT + " #MyTimeLine");
+                        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                                finalT + " #MyTimeLine");
 
-                    startActivity(Intent.createChooser(shareIntent, "Share via"));
+                        startActivity(Intent.createChooser(shareIntent, "Share via"));
+                    }
+                });
+            }
+
+            tv.setText(n);
+            tv3.setText(t);
+
+            if (isNetworkAvailable())
+
+            {
+                String imgURI = "http://api.wavit.co/v1.1/data/profiles/img/" + u + ".jpg";
+                Picasso.with(getActivity()).load(imgURI).into(av);
+            } else {
+
+                final Resources res = getActivity().getResources();
+                final int tileSize = res.getDimensionPixelSize(R.dimen.letter_tile_size);
+                Random ran = new Random();
+                int key = ran.nextInt(8);
+                final LetterTileProvider tileProvider = new LetterTileProvider(getActivity());
+                final Bitmap letterTile = tileProvider.getLetterTile(n, key + "", tileSize, tileSize);
+
+                av.setImageBitmap(letterTile);
+                //av.setImageResource(R.drawable.me);
+
+            }
+
+            edittext.setOnKeyListener(new View.OnKeyListener() {
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    // If the event is a key-down event on the "enter" button
+                    if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                            (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                        String comm = edittext.getText().toString();
+                        NewCommTask t = new NewCommTask(f, comm);
+                        t.execute();
+                        edittext.setText("");
+
+                        // Perform action on key press
+                        //.makeText(HelloFormStuff.this, edittext.getText(), Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    return false;
                 }
             });
-        }
 
-        tv.setText(n);
-        tv3.setText(t);
-
-        if(isNetworkAvailable())
-
-        {
-            String imgURI="http://api.wavit.co/v1.1/data/profiles/img/"+u+".jpg";
-            Picasso.with(getActivity()).load(imgURI).into(av);
-        }
-        else{
-
-            final Resources res = getActivity().getResources();
-            final int tileSize = res.getDimensionPixelSize(R.dimen.letter_tile_size);
-            Random ran=new Random();
-            int key=ran.nextInt(8);
-            final LetterTileProvider tileProvider = new LetterTileProvider(getActivity());
-            final Bitmap letterTile = tileProvider.getLetterTile(n, key+"", tileSize, tileSize);
-
-            av.setImageBitmap(letterTile);
-            //av.setImageResource(R.drawable.me);
-
-        }
-
-        edittext.setOnKeyListener(new View.OnKeyListener() {
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
-                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    String comm=edittext.getText().toString();
-                    NewCommTask t=new NewCommTask(f,comm);
-                    t.execute();
-                    edittext.setText("");
-
-                    // Perform action on key press
-                    //.makeText(HelloFormStuff.this, edittext.getText(), Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                return false;
+            if (!isNetworkAvailable()) {
+                edittext.setHint("Comments not available (offline)");
+                edittext.setEnabled(false);
             }
-        });
-
-        if(!isNetworkAvailable())
+        }
+        catch(Exception e)
         {
-            edittext.setHint("Comments not available (offline)");
-            edittext.setEnabled(false);
+            //Cursor is probably null
         }
 
 

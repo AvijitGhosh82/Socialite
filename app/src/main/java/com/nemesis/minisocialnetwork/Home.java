@@ -27,53 +27,48 @@ public class Home extends ActionBarActivity implements HomeFragment.OnItemClicke
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
 
         SharedPreferences pref = getSharedPreferences("MyPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         uid=pref.getString("uid", null);
         token=pref.getString("token", null);
-        if(uid==null || token==null)
-        {
-            Intent i=new Intent(Home.this,LoginActivity.class);
-            startActivity(i);
-            //return;
-        }
-
-        TimeLineSyncAdapter.initializeSyncAdapter(this, token);
 
 
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
-        SpannableString s = new SpannableString("My Timeline");
-
-        c=Home.this;
-
-        if(toolbar != null)
-        {
-
-            toolbar.setTitle(s);
-        }
+            setContentView(R.layout.activity_home);
 
 
-        if (findViewById(R.id.fragment_detail_container) != null) {
-            // The detail container view will be present only in the large-screen layouts
-            // (res/layout-sw600dp). If this view is present, then the activity should be
-            // in two-pane mode.
-            mTwoPane = true;
-            // In two-pane mode, show the detail view in this activity by
-            // adding or replacing the detail fragment using a
-            // fragment transaction.
-            if (savedInstanceState == null) {
-                DetailedPostFragment df=new DetailedPostFragment();
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_detail_container, df, DETAILFRAGMENT_TAG)
-                        .commit();
+            TimeLineSyncAdapter.initializeSyncAdapter(this, token);
+
+
+            Toolbar toolbar = (Toolbar) findViewById(R.id.my_timeline_toolbar);
+            SpannableString s = new SpannableString("My Timeline");
+
+            c = Home.this;
+
+            if (toolbar != null) {
+
+                toolbar.setTitle(s);
             }
-        } else {
-            mTwoPane = false;
-            //getSupportActionBar().setElevation(0f);
-        }
+
+
+            if (findViewById(R.id.fragment_detail_container) != null) {
+                // The detail container view will be present only in the large-screen layouts
+                // (res/layout-sw600dp). If this view is present, then the activity should be
+                // in two-pane mode.
+                mTwoPane = true;
+                // In two-pane mode, show the detail view in this activity by
+                // adding or replacing the detail fragment using a
+                // fragment transaction.
+                if (savedInstanceState == null) {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.fragment_detail_container, new DetailedPostFragment(), DETAILFRAGMENT_TAG)
+                            .commit();
+                }
+            } else {
+                mTwoPane = false;
+                //getSupportActionBar().setElevation(0f);
+            }
+
 
     }
 
